@@ -682,6 +682,9 @@
             <!-- Move Input Table -->
             <div class="card">
                 <h2>Enter Your Moves:</h2>
+                <div style="text-align: center; font-size: 0.85rem; color: #9333ea; margin-bottom: 16px; font-weight: 600;">
+                    ✨ Auto-detects win • Click "CHECK STATUS" anytime ✨
+                </div>
                 <div class="move-table-container">
                     <table class="move-table">
                         <thead>
@@ -699,7 +702,7 @@
                 
                 <div class="action-buttons">
                     <button class="btn btn-yellow" onclick="resetMemory()">RESET</button>
-                    <button class="btn btn-purple" onclick="checkSolution()">CHECK SOLUTION</button>
+                    <button class="btn btn-purple" onclick="checkSolution()">CHECK STATUS</button>
                     <button class="btn btn-gray" onclick="backToMenu()">MAIN MENU</button>
                 </div>
             </div>
@@ -907,6 +910,35 @@
                     state.moves[index].to = num - 1;
                 }
                 updateMemoryUI();
+                
+                // Auto-check after editing
+                setTimeout(() => {
+                    const minMoves = Math.pow(2, state.numDiscs) - 1;
+                    if (state.moves.length >= minMoves) {
+                        const testTowers = simulateMoves();
+                        let isComplete = testTowers[2].length === state.numDiscs;
+                        
+                        if (isComplete) {
+                            let isCorrect = true;
+                            for (let i = 0; i < testTowers[2].length; i++) {
+                                if (testTowers[2][i] !== state.numDiscs - i) {
+                                    isCorrect = false;
+                                    break;
+                                }
+                            }
+                            
+                            if (isCorrect) {
+                                // They won! Stop timer and show congratulations
+                                if (state.timerInterval) {
+                                    clearInterval(state.timerInterval);
+                                    state.timerInterval = null;
+                                }
+                                state.towers = testTowers;
+                                showResult();
+                            }
+                        }
+                    }
+                }, 100);
             }
         }
 
@@ -921,6 +953,35 @@
                     state.moves.push({ disc: disc, to: stick - 1 });
                     state.currentInput = '';
                     updateMemoryUI();
+                    
+                    // Auto-check if solution is complete
+                    setTimeout(() => {
+                        const minMoves = Math.pow(2, state.numDiscs) - 1;
+                        if (state.moves.length >= minMoves) {
+                            const testTowers = simulateMoves();
+                            let isComplete = testTowers[2].length === state.numDiscs;
+                            
+                            if (isComplete) {
+                                let isCorrect = true;
+                                for (let i = 0; i < testTowers[2].length; i++) {
+                                    if (testTowers[2][i] !== state.numDiscs - i) {
+                                        isCorrect = false;
+                                        break;
+                                    }
+                                }
+                                
+                                if (isCorrect) {
+                                    // They won! Stop timer and show congratulations
+                                    if (state.timerInterval) {
+                                        clearInterval(state.timerInterval);
+                                        state.timerInterval = null;
+                                    }
+                                    state.towers = testTowers;
+                                    showResult();
+                                }
+                            }
+                        }
+                    }, 100);
                 } else {
                     state.currentInput = '';
                     updateMoveTable();
@@ -965,13 +1026,20 @@
         }
 
         function checkSolution() {
-            if (state.timerInterval) {
-                clearInterval(state.timerInterval);
-                state.timerInterval = null;
-            }
-            
             state.towers = simulateMoves();
-            showResult();
+            const isWin = checkWin();
+            
+            if (isWin) {
+                // They won! Stop timer and show results
+                if (state.timerInterval) {
+                    clearInterval(state.timerInterval);
+                    state.timerInterval = null;
+                }
+                showResult();
+            } else {
+                // Not complete yet - show current status but keep playing
+                showResult();
+            }
         }
 
         function formatTime(seconds) {
@@ -1065,6 +1133,8 @@
         }
 
         function showResult() {
+            const wasTimerRunning = state.timerInterval !== null;
+            
             if (state.timerInterval) {
                 clearInterval(state.timerInterval);
                 state.timerInterval = null;
@@ -1079,17 +1149,42 @@
             card.className = 'result-card ' + (isWin ? 'success' : 'fail');
             
             document.getElementById('resultTitle').textContent = 
-                isWin ? '🎉 SUCCESS! 🎉' : '❌ NOT QUITE! ❌';
+                isWin ? '🎉 CONGRATULATIONS! 🎉' : '❌ NOT QUITE! ❌';
+            
+            const difficultyNames = {
+                easy: 'EASY',
+                medium: 'MEDIUM',
+                hard: 'HARD',
+                expert: 'EXPERT'
+            };
             
             document.getElementById('resultStats').innerHTML = `
-                <div>Time: ${formatTime(elapsed)}</div>
-                <div>Moves: ${state.moves.length}</div>
+                <div style="margin-bottom: 20px; font-size: 1.3rem; color: #9333ea;">
+                    ${state.numDiscs} Discs - ${difficultyNames[state.difficulty]} Mode
+                </div>
+                <div>⏱️ Time: ${formatTime(elapsed)}</div>
+                <div>🎯 Moves: ${state.moves.length}</div>
+                ${isWin ? `<div style="margin-top: 20px; color: #22c55e;">Perfect Solution!</div>` : `<div style="margin-top: 20px; color: #f59e0b;">Keep trying - you can do it!</div>`}
             `;
             
             renderTowers('resultTowers');
             
             const buttons = document.getElementById('resultButtons');
             buttons.innerHTML = '';
+            
+            if (!isWin && wasTimerRunning) {
+                // Add continue button to go back and keep playing
+                const continueBtn = document.createElement('button');
+                continueBtn.className = 'btn btn-green';
+                continueBtn.textContent = 'CONTINUE';
+                continueBtn.onclick = () => {
+                    showScreen('memoryScreen');
+                    // Restart timer
+                    state.timerInterval = setInterval(() => updateMemoryUI(), 1000);
+                    updateMemoryUI();
+                };
+                buttons.appendChild(continueBtn);
+            }
             
             if (!isWin) {
                 const tryAgain = document.createElement('button');
@@ -1103,8 +1198,8 @@
             }
             
             const playAgain = document.createElement('button');
-            playAgain.className = 'btn btn-green';
-            playAgain.textContent = isWin ? 'PLAY AGAIN' : 'START OVER';
+            playAgain.className = isWin ? 'btn btn-green' : 'btn btn-gray';
+            playAgain.textContent = isWin ? 'PLAY AGAIN' : 'MAIN MENU';
             playAgain.onclick = backToMenu;
             buttons.appendChild(playAgain);
         }
