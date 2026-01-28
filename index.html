@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Memory Tower of Hanoi</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #dbeafe 0%, #e9d5ff 100%);
+            min-height: 100vh;
+            padding: 16px;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        .container { max-width: 1400px; margin: 0 auto; }
+        
+        @media (min-width: 768px) {
+            body { padding: 32px; }
+        }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        
+        @media (min-width: 768px) {
+            .card {
+                border-radius: 24px;
+                box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+                padding: 48px;
+                margin-bottom: 32px;
+            }
+        }
+        
+        h1 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #9333ea;
+        }
+        
+        @media (min-width: 768px) {
+            h1 { font-size: 2.25rem; margin-bottom: 32px; }
+        }
+        
+        h2 {
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 16px;
+            color: #374151;
+        }
+        
+        @media (min-width: 768px) {
+            h2 { font-size: 1.5rem; margin-bottom: 24px; }
+        }
+        
+        .hidden { display: none; }
+        
+        /* Setup */
+        .label {
+            font-size: 1rem;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #374151;
+            text-align: center;
+        }
+        
+        @media (min-width: 768px) {
+            .label { font-size: 1.25rem; margin-bottom: 16px; }
+        }
+        
+        .disc-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 24px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        @media (min-width: 768px) {
+            .disc-grid {
+                grid-template-columns: repeat(6, 1fr);
+                gap: 16px;
+                margin-bottom: 40px;
+            }
+        }
+        
+        .disc-btn {
+            padding: 18px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #e5e7eb;
+            color: #374151;
+            touch-action: manipulation;
+            min-height: 60px;
+        }
+        
+        @media (min-width: 768px) {
+            .disc-btn { padding: 20px; }
+        }
+        
+        .disc-btn:hover { background: #d1d5db; }
+        .disc-btn.active {
+            background: #9333ea;
+            color: white;
+            transform: scale(1.05);
+        }
+        
+        .diff-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            max-width: 800px;
+            margin: 0 auto 24px;
+        }
+        
+        @media (min-width: 768px) {
+            .diff-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+                margin-bottom: 40px;
+            }
+        }
+        
+        .diff-btn {
+            padding: 20px 16px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #e5e7eb;
+            color: #374151;
+            touch-action: manipulation;
+            min-height: 80px;
+        }
+        
+        @media (min-width: 768px) {
+            .diff-btn { padding: 24px; font-size: 1.25rem; }
+        }
+        
+        .diff-btn > div:first-child {
+            font-size: 1.2rem;
+            margin-bottom: 6px;
+        }
+        
+        .diff-btn > div:last-child {
+            font-size: 0.85rem;
+        }
+        
+        @media (min-width: 768px) {
+            .diff-btn > div:first-child {
+                font-size: 1.5rem;
+                margin-bottom: 8px;
+            }
+            
+            .diff-btn > div:last-child {
+                font-size: 0.9rem;
+            }
+        }
+        
+        .diff-btn:hover { background: #d1d5db; }
+        .diff-btn.easy.active { background: #22c55e; color: white; }
+        .diff-btn.medium.active { background: #eab308; color: white; }
+        .diff-btn.hard.active { background: #f97316; color: white; }
+        .diff-btn.expert.active { background: #ef4444; color: white; }
+        
+        .start-btn {
+            display: block;
+            margin: 0 auto;
+            background: #22c55e;
+            color: white;
+            padding: 18px 60px;
+            border-radius: 12px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            touch-action: manipulation;
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        @media (min-width: 768px) {
+            .start-btn { padding: 20px 80px; font-size: 1.75rem; width: auto; }
+        }
+        
+        .start-btn:hover { background: #16a34a; }
+        
+        /* Towers */
+        .towers-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 32px 0;
+            overflow-x: auto;
+            padding: 10px;
+        }
+        
+        @media (min-width: 768px) {
+            .towers-container { gap: 80px; margin: 64px 0; }
+        }
+        
+        .tower {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .tower-label {
+            font-size: 1rem;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+        
+        @media (min-width: 768px) {
+            .tower-label { font-size: 1.5rem; margin-bottom: 20px; }
+        }
+        
+        .tower-body {
+            position: relative;
+            width: 100px;
+            height: 180px;
+            background: #f3f4f6;
+            border: 3px solid #9ca3af;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+            padding-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            touch-action: manipulation;
+        }
+        
+        @media (min-width: 768px) {
+            .tower-body {
+                width: 180px;
+                height: 280px;
+                border: 4px solid #9ca3af;
+                border-radius: 12px;
+                padding-bottom: 16px;
+            }
+        }
+        
+        .tower-body:active { border-color: #60a5fa; }
+        .tower-body.selected {
+            border-color: #eab308;
+            background: #fef9c3;
+            transform: scale(1.05);
+        }
+        
+        .tower-pole {
+            position: absolute;
+            width: 6px;
+            height: 100%;
+            background: #1f2937;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 0;
+        }
+        
+        @media (min-width: 768px) {
+            .tower-pole { width: 8px; }
+        }
+        
+        .disc {
+            height: 20px;
+            border-radius: 6px;
+            margin-bottom: 3px;
+            position: relative;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+        }
+        
+        @media (min-width: 768px) {
+            .disc {
+                height: 30px;
+                border-radius: 8px;
+                margin-bottom: 4px;
+                font-size: 1rem;
+            }
+        }
+        
+        .disc.selected {
+            transform: scale(1.1);
+            box-shadow: 0 0 0 3px #eab308;
+        }
+        
+        .disc.d1 { background: #ef4444; width: 25px; }
+        .disc.d2 { background: #3b82f6; width: 35px; }
+        .disc.d3 { background: #22c55e; width: 45px; }
+        .disc.d4 { background: #eab308; width: 55px; }
+        .disc.d5 { background: #a855f7; width: 65px; }
+        .disc.d6 { background: #ec4899; width: 75px; }
+        .disc.d7 { background: #f97316; width: 85px; }
+        .disc.d8 { background: #14b8a6; width: 95px; }
+        
+        @media (min-width: 768px) {
+            .disc.d1 { width: 40px; }
+            .disc.d2 { width: 60px; }
+            .disc.d3 { width: 80px; }
+            .disc.d4 { width: 100px; }
+            .disc.d5 { width: 120px; }
+            .disc.d6 { width: 140px; }
+            .disc.d7 { width: 160px; }
+            .disc.d8 { width: 180px; }
+        }
+        
+        /* Stats */
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        
+        @media (min-width: 768px) {
+            .stats { font-size: 1.5rem; margin-bottom: 24px; }
+        }
+        
+        .stat-blue { color: #3b82f6; }
+        .stat-green { color: #22c55e; }
+        
+        /* Move Table */
+        .move-table-container {
+            max-width: 600px;
+            margin: 0 auto 24px;
+            overflow-x: auto;
+        }
+        
+        @media (min-width: 768px) {
+            .move-table-container { margin-bottom: 40px; }
+        }
+        
+        .move-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            min-width: 300px;
+        }
+        
+        .move-table th {
+            background: #e5e7eb;
+            border: 2px solid #9ca3af;
+            padding: 10px 8px;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+        
+        @media (min-width: 768px) {
+            .move-table th { padding: 12px; font-size: 1.25rem; }
+        }
+        
+        .move-table td {
+            border: 2px solid #9ca3af;
+            padding: 8px 6px;
+            text-align: center;
+        }
+        
+        @media (min-width: 768px) {
+            .move-table td { padding: 8px; }
+        }
+        
+        .move-table input {
+            width: 100%;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 10px 8px;
+            touch-action: manipulation;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        
+        @media (min-width: 768px) {
+            .move-table input { font-size: 1.25rem; padding: 8px; }
+        }
+        
+        .move-table .disc-col { color: #3b82f6; }
+        .move-table .stick-col { color: #22c55e; }
+        
+        .move-table tr.new-row {
+            background: #fef9c3;
+        }
+        
+        .move-table tr.new-row td {
+            font-size: 1.4rem;
+            font-weight: bold;
+            padding: 12px;
+        }
+        
+        @media (min-width: 768px) {
+            .move-table tr.new-row td { font-size: 1.75rem; padding: 16px; }
+        }
+        
+        .input-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        @media (min-width: 768px) {
+            .input-buttons { gap: 12px; }
+        }
+        
+        .input-btn {
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #3b82f6;
+            color: white;
+            touch-action: manipulation;
+        }
+        
+        @media (min-width: 768px) {
+            .input-btn { width: 70px; height: 70px; font-size: 1.75rem; }
+        }
+        
+        .input-btn:active {
+            background: #2563eb;
+            transform: scale(0.95);
+        }
+        
+        /* Buttons */
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        @media (min-width: 768px) {
+            .action-buttons { gap: 16px; }
+        }
+        
+        .btn {
+            padding: 14px 24px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            touch-action: manipulation;
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        @media (min-width: 768px) {
+            .btn { 
+                padding: 16px 32px; 
+                font-size: 1.25rem;
+                flex: 0;
+                min-width: auto;
+            }
+        }
+        
+        .btn-green { background: #22c55e; color: white; }
+        .btn-green:active { background: #16a34a; }
+        
+        .btn-yellow { background: #eab308; color: white; }
+        .btn-yellow:active { background: #ca8a04; }
+        
+        .btn-purple { background: #9333ea; color: white; }
+        .btn-purple:active { background: #7e22ce; }
+        
+        .btn-gray { background: #6b7280; color: white; }
+        .btn-gray:active { background: #4b5563; }
+        
+        .instruction {
+            text-align: center;
+            font-size: 1rem;
+            color: #6b7280;
+            margin-bottom: 16px;
+            font-weight: 500;
+            padding: 0 12px;
+        }
+        
+        @media (min-width: 768px) {
+            .instruction { font-size: 1.25rem; margin-bottom: 24px; }
+        }
+        
+        .no-visual {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #9333ea;
+            font-weight: bold;
+            padding: 40px 20px;
+            background: #f3f4f6;
+            border-radius: 12px;
+            margin: 24px 0;
+        }
+        
+        .no-visual > div:last-child {
+            font-size: 1rem;
+            margin-top: 20px;
+            color: #6b7280;
+        }
+        
+        @media (min-width: 768px) {
+            .no-visual { 
+                font-size: 1.5rem; 
+                padding: 80px; 
+                margin: 40px 0; 
+            }
+            
+            .no-visual > div:last-child {
+                font-size: 1.2rem;
+            }
+        }
+        
+        /* Result */
+        .result-card {
+            border-radius: 16px;
+            padding: 32px 20px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        
+        @media (min-width: 768px) {
+            .result-card { border-radius: 24px; padding: 48px; margin-bottom: 32px; }
+        }
+        
+        .result-card.success { background: #d1fae5; }
+        .result-card.fail { background: #fee2e2; }
+        
+        .result-title {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        @media (min-width: 768px) {
+            .result-title { font-size: 3rem; margin-bottom: 24px; }
+        }
+        
+        .result-card.success .result-title { color: #22c55e; }
+        .result-card.fail .result-title { color: #ef4444; }
+        
+        .result-stats {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        @media (min-width: 768px) {
+            .result-stats { font-size: 1.5rem; }
+        }
+        
+        .result-stats div { margin: 12px 0; }
+        
+        .result-buttons-wrapper {
+            margin-top: 24px;
+        }
+        
+        @media (min-width: 768px) {
+            .result-buttons-wrapper { margin-top: 40px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Setup Screen -->
+        <div id="setupScreen">
+            <div class="card">
+                <h1>Memory Tower of Hanoi</h1>
+                
+                <div class="label">Select Number of Discs:</div>
+                <div class="disc-grid" id="discButtons"></div>
+                
+                <div class="label">Select Difficulty:</div>
+                <div class="diff-grid">
+                    <button class="diff-btn easy active" onclick="selectDifficulty('easy')">
+                        <div>EASY</div>
+                        <div>Play the game normally</div>
+                    </button>
+                    <button class="diff-btn medium" onclick="selectDifficulty('medium')">
+                        <div>MEDIUM</div>
+                        <div>See discs but solve in your head</div>
+                    </button>
+                    <button class="diff-btn hard" onclick="selectDifficulty('hard')">
+                        <div>HARD</div>
+                        <div>See empty towers only</div>
+                    </button>
+                    <button class="diff-btn expert" onclick="selectDifficulty('expert')">
+                        <div>EXPERT</div>
+                        <div>No visual - pure memory</div>
+                    </button>
+                </div>
+                
+                <button class="start-btn" onclick="startGame()">START GAME</button>
+            </div>
+        </div>
+        
+        <!-- Interactive Screen (Easy Mode) -->
+        <div id="interactiveScreen" class="hidden">
+            <div class="card">
+                <h1>Tower of Hanoi - EASY MODE</h1>
+                <h2><span id="easyDiscs"></span> Discs - Click towers to move discs</h2>
+                <div class="stats">
+                    <div class="stat-blue">Time: <span id="easyTime">0:00</span></div>
+                    <div class="stat-green">Moves: <span id="easyMoves">0</span></div>
+                </div>
+                <div class="instruction" id="easyInstruction">Click a tower to pick up the top disc</div>
+            </div>
+            
+            <div class="card">
+                <div class="towers-container" id="easyTowers"></div>
+                <div class="action-buttons">
+                    <button class="btn btn-yellow" onclick="resetEasy()">RESET</button>
+                    <button class="btn btn-gray" onclick="backToMenu()">MAIN MENU</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Memory Mode Screen (Medium/Hard/Expert) -->
+        <div id="memoryScreen" class="hidden">
+            <div class="card">
+                <h1 id="memoryTitle">Tower of Hanoi - MEDIUM MODE</h1>
+                <h2 id="memorySubtitle"></h2>
+                <div class="stats">
+                    <div class="stat-blue">Time: <span id="memoryTime">0:00</span></div>
+                    <div class="stat-green">Moves: <span id="memoryMoves">0</span></div>
+                </div>
+            </div>
+            
+            <!-- Visual Reference (shown for medium and hard only) -->
+            <div class="card" id="visualReference">
+                <div class="towers-container" id="memoryTowers"></div>
+            </div>
+            
+            <!-- No Visual (shown for expert only) -->
+            <div class="card hidden" id="noVisualReference">
+                <div class="no-visual">
+                    <div>EXPERT MODE - NO VISUAL</div>
+                    <div>
+                        Solve <span id="expertDiscs"></span> discs completely in your mind
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Move Input Table -->
+            <div class="card">
+                <h2>Enter Your Moves:</h2>
+                <div class="move-table-container">
+                    <table class="move-table">
+                        <thead>
+                            <tr>
+                                <th>DISC</th>
+                                <th>TO</th>
+                                <th>STICK</th>
+                            </tr>
+                        </thead>
+                        <tbody id="moveTableBody"></tbody>
+                    </table>
+                    
+                    <div class="input-buttons" id="inputButtons"></div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-yellow" onclick="resetMemory()">RESET</button>
+                    <button class="btn btn-purple" onclick="checkSolution()">CHECK SOLUTION</button>
+                    <button class="btn btn-gray" onclick="backToMenu()">MAIN MENU</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Result Screen -->
+        <div id="resultScreen" class="hidden">
+            <div class="card">
+                <div id="resultCard" class="result-card">
+                    <div class="result-title" id="resultTitle"></div>
+                    <div class="result-stats" id="resultStats"></div>
+                </div>
+                
+                <h2>Your Result:</h2>
+                <div class="towers-container" id="resultTowers"></div>
+                
+                <div style="margin-top: 40px;">
+                    <div class="action-buttons" id="resultButtons"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let state = {
+            numDiscs: 3,
+            difficulty: 'easy',
+            towers: [[], [], []],
+            moves: [],
+            startTime: null,
+            timerInterval: null,
+            selectedTower: null,
+            currentInput: ''
+        };
+
+        function initDiscButtons() {
+            const container = document.getElementById('discButtons');
+            container.innerHTML = '';
+            
+            for (let i = 3; i <= 8; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'disc-btn' + (i === state.numDiscs ? ' active' : '');
+                btn.textContent = i;
+                btn.onclick = () => {
+                    state.numDiscs = i;
+                    initDiscButtons();
+                };
+                container.appendChild(btn);
+            }
+        }
+
+        function selectDifficulty(diff) {
+            state.difficulty = diff;
+            document.querySelectorAll('.diff-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.diff-btn.' + diff).classList.add('active');
+        }
+
+        function initTowers() {
+            state.towers = [
+                Array.from({ length: state.numDiscs }, (_, i) => state.numDiscs - i),
+                [],
+                []
+            ];
+        }
+
+        function renderTowers(containerId, interactive = false, showDiscs = true) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            const displayTowers = showDiscs ? state.towers : [[], [], []];
+            
+            displayTowers.forEach((tower, towerIndex) => {
+                const towerDiv = document.createElement('div');
+                towerDiv.className = 'tower';
+                
+                const label = document.createElement('div');
+                label.className = 'tower-label';
+                label.textContent = `Stick ${towerIndex + 1}`;
+                towerDiv.appendChild(label);
+                
+                const body = document.createElement('div');
+                body.className = 'tower-body';
+                if (interactive && state.selectedTower === towerIndex) {
+                    body.classList.add('selected');
+                }
+                
+                const pole = document.createElement('div');
+                pole.className = 'tower-pole';
+                body.appendChild(pole);
+                
+                tower.forEach((disc, discIndex) => {
+                    const discDiv = document.createElement('div');
+                    discDiv.className = `disc d${disc}`;
+                    const isTop = discIndex === tower.length - 1;
+                    if (interactive && isTop && state.selectedTower === towerIndex) {
+                        discDiv.classList.add('selected');
+                    }
+                    discDiv.textContent = disc;
+                    body.appendChild(discDiv);
+                });
+                
+                if (interactive) {
+                    body.onclick = () => handleTowerClick(towerIndex);
+                }
+                
+                towerDiv.appendChild(body);
+                container.appendChild(towerDiv);
+            });
+        }
+
+        function handleTowerClick(index) {
+            if (state.selectedTower === null) {
+                if (state.towers[index].length > 0) {
+                    state.selectedTower = index;
+                    updateEasyUI();
+                }
+            } else {
+                if (state.selectedTower === index) {
+                    state.selectedTower = null;
+                    updateEasyUI();
+                } else {
+                    const disc = state.towers[state.selectedTower][state.towers[state.selectedTower].length - 1];
+                    const target = state.towers[index];
+                    
+                    if (target.length === 0 || disc < target[target.length - 1]) {
+                        state.towers[state.selectedTower].pop();
+                        state.towers[index].push(disc);
+                        state.moves.push({ disc, from: state.selectedTower, to: index });
+                        
+                        state.selectedTower = null;
+                        updateEasyUI();
+                        
+                        setTimeout(() => {
+                            if (checkWin()) {
+                                showResult();
+                            }
+                        }, 100);
+                    }
+                }
+            }
+        }
+
+        function updateEasyUI() {
+            updateTime('easyTime');
+            document.getElementById('easyMoves').textContent = state.moves.length;
+            
+            const instruction = document.getElementById('easyInstruction');
+            if (state.selectedTower === null) {
+                instruction.textContent = 'Click a tower to pick up the top disc';
+            } else {
+                instruction.textContent = 'Click another tower to move the disc';
+            }
+            
+            renderTowers('easyTowers', true);
+        }
+
+        function updateTime(elementId) {
+            const elapsed = Math.floor((Date.now() - state.startTime) / 1000);
+            const mins = Math.floor(elapsed / 60);
+            const secs = elapsed % 60;
+            document.getElementById(elementId).textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updateMemoryUI() {
+            updateTime('memoryTime');
+            document.getElementById('memoryMoves').textContent = state.moves.length;
+            updateMoveTable();
+        }
+
+        function updateMoveTable() {
+            const tbody = document.getElementById('moveTableBody');
+            tbody.innerHTML = '';
+            
+            // Existing moves
+            state.moves.forEach((move, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="disc-col"><input type="text" maxlength="1" value="${move.disc}" 
+                        onchange="editMove(${index}, 'disc', this.value)" /></td>
+                    <td style="color: #6b7280; font-weight: bold;">TO</td>
+                    <td class="stick-col"><input type="text" maxlength="1" value="${move.to + 1}" 
+                        onchange="editMove(${index}, 'to', this.value)" /></td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            // New row
+            const newRow = document.createElement('tr');
+            newRow.className = 'new-row';
+            const parts = state.currentInput.split('');
+            newRow.innerHTML = `
+                <td class="disc-col">${parts[0] || '?'}</td>
+                <td style="color: #6b7280;">TO</td>
+                <td class="stick-col">${parts[1] || '?'}</td>
+            `;
+            tbody.appendChild(newRow);
+        }
+
+        function editMove(index, field, value) {
+            const num = parseInt(value);
+            if (!isNaN(num)) {
+                if (field === 'disc' && num >= 1 && num <= state.numDiscs) {
+                    state.moves[index].disc = num;
+                } else if (field === 'to' && num >= 1 && num <= 3) {
+                    state.moves[index].to = num - 1;
+                }
+                updateMemoryUI();
+            }
+        }
+
+        function handleInput(num) {
+            state.currentInput += num;
+            
+            if (state.currentInput.length === 2) {
+                const disc = parseInt(state.currentInput[0]);
+                const stick = parseInt(state.currentInput[1]);
+                
+                if (disc >= 1 && disc <= state.numDiscs && stick >= 1 && stick <= 3) {
+                    state.moves.push({ disc: disc, to: stick - 1 });
+                    state.currentInput = '';
+                    updateMemoryUI();
+                } else {
+                    state.currentInput = '';
+                    updateMoveTable();
+                }
+            } else {
+                updateMoveTable();
+            }
+        }
+
+        function checkWin() {
+            if (state.towers[2].length !== state.numDiscs) return false;
+            for (let i = 0; i < state.towers[2].length; i++) {
+                if (state.towers[2][i] !== state.numDiscs - i) return false;
+            }
+            return true;
+        }
+
+        function simulateMoves() {
+            const towers = [
+                Array.from({ length: state.numDiscs }, (_, i) => state.numDiscs - i),
+                [],
+                []
+            ];
+            
+            for (const move of state.moves) {
+                const disc = move.disc;
+                let fromTower = -1;
+                
+                for (let i = 0; i < 3; i++) {
+                    const index = towers[i].indexOf(disc);
+                    if (index !== -1) {
+                        fromTower = i;
+                        towers[i].splice(index, 1);
+                        break;
+                    }
+                }
+                
+                towers[move.to].push(disc);
+            }
+            
+            return towers;
+        }
+
+        function checkSolution() {
+            if (state.timerInterval) {
+                clearInterval(state.timerInterval);
+                state.timerInterval = null;
+            }
+            
+            state.towers = simulateMoves();
+            showResult();
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function startGame() {
+            initTowers();
+            state.moves = [];
+            state.startTime = Date.now();
+            state.selectedTower = null;
+            state.currentInput = '';
+            
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            
+            if (state.difficulty === 'easy') {
+                showScreen('interactiveScreen');
+                document.getElementById('easyDiscs').textContent = state.numDiscs;
+                state.timerInterval = setInterval(() => updateEasyUI(), 1000);
+                updateEasyUI();
+            } else {
+                showScreen('memoryScreen');
+                
+                const titles = {
+                    medium: 'MEDIUM MODE',
+                    hard: 'HARD MODE',
+                    expert: 'EXPERT MODE'
+                };
+                const subtitles = {
+                    medium: `${state.numDiscs} Discs - Solve in your head, discs don't move`,
+                    hard: `${state.numDiscs} Discs - Empty towers, visualize in your mind`,
+                    expert: `${state.numDiscs} Discs - No visual, pure memory challenge`
+                };
+                
+                document.getElementById('memoryTitle').textContent = `Tower of Hanoi - ${titles[state.difficulty]}`;
+                document.getElementById('memorySubtitle').textContent = subtitles[state.difficulty];
+                
+                // Show/hide visual reference
+                if (state.difficulty === 'expert') {
+                    document.getElementById('visualReference').classList.add('hidden');
+                    document.getElementById('noVisualReference').classList.remove('hidden');
+                    document.getElementById('expertDiscs').textContent = state.numDiscs;
+                } else {
+                    document.getElementById('visualReference').classList.remove('hidden');
+                    document.getElementById('noVisualReference').classList.add('hidden');
+                    
+                    // Medium shows discs, Hard shows empty towers
+                    renderTowers('memoryTowers', false, state.difficulty === 'medium');
+                }
+                
+                // Setup input buttons
+                const inputButtons = document.getElementById('inputButtons');
+                inputButtons.innerHTML = '';
+                
+                for (let i = 1; i <= Math.max(state.numDiscs, 3); i++) {
+                    const btn = document.createElement('button');
+                    btn.className = 'input-btn';
+                    btn.textContent = i;
+                    btn.onclick = () => handleInput(i.toString());
+                    inputButtons.appendChild(btn);
+                }
+                
+                state.timerInterval = setInterval(() => updateMemoryUI(), 1000);
+                updateMemoryUI();
+            }
+        }
+
+        function resetEasy() {
+            initTowers();
+            state.moves = [];
+            state.selectedTower = null;
+            state.startTime = Date.now();
+            updateEasyUI();
+        }
+
+        function resetMemory() {
+            state.moves = [];
+            state.currentInput = '';
+            state.startTime = Date.now();
+            updateMemoryUI();
+        }
+
+        function backToMenu() {
+            if (state.timerInterval) {
+                clearInterval(state.timerInterval);
+                state.timerInterval = null;
+            }
+            showScreen('setupScreen');
+        }
+
+        function showResult() {
+            if (state.timerInterval) {
+                clearInterval(state.timerInterval);
+                state.timerInterval = null;
+            }
+            
+            const elapsed = Math.floor((Date.now() - state.startTime) / 1000);
+            const isWin = checkWin();
+            
+            showScreen('resultScreen');
+            
+            const card = document.getElementById('resultCard');
+            card.className = 'result-card ' + (isWin ? 'success' : 'fail');
+            
+            document.getElementById('resultTitle').textContent = 
+                isWin ? '🎉 SUCCESS! 🎉' : '❌ NOT QUITE! ❌';
+            
+            document.getElementById('resultStats').innerHTML = `
+                <div>Time: ${formatTime(elapsed)}</div>
+                <div>Moves: ${state.moves.length}</div>
+            `;
+            
+            renderTowers('resultTowers');
+            
+            const buttons = document.getElementById('resultButtons');
+            buttons.innerHTML = '';
+            
+            if (!isWin) {
+                const tryAgain = document.createElement('button');
+                tryAgain.className = 'btn btn-yellow';
+                tryAgain.textContent = 'TRY AGAIN';
+                tryAgain.onclick = () => {
+                    initTowers();
+                    startGame();
+                };
+                buttons.appendChild(tryAgain);
+            }
+            
+            const playAgain = document.createElement('button');
+            playAgain.className = 'btn btn-green';
+            playAgain.textContent = isWin ? 'PLAY AGAIN' : 'START OVER';
+            playAgain.onclick = backToMenu;
+            buttons.appendChild(playAgain);
+        }
+
+        function showScreen(screenId) {
+            ['setupScreen', 'interactiveScreen', 'memoryScreen', 'resultScreen'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        // Initialize
+        initDiscButtons();
+    </script>
+</body>
+</html>
