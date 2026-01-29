@@ -504,6 +504,11 @@
         
         .btn-purple { background: #9333ea; color: white; }
         .btn-purple:active { background: #7e22ce; }
+        .btn-purple:disabled { 
+            background: #d1d5db; 
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
         
         .btn-gray { background: #6b7280; color: white; }
         .btn-gray:active { background: #4b5563; }
@@ -683,7 +688,7 @@
             <div class="card">
                 <h2>Enter Your Moves:</h2>
                 <div style="text-align: center; font-size: 0.85rem; color: #9333ea; margin-bottom: 16px; font-weight: 600;">
-                    ✨ Auto-detects win • Click "CHECK STATUS" anytime ✨
+                    ✨ Auto-detects win • Limited status checks ✨
                 </div>
                 <div class="move-table-container">
                     <table class="move-table">
@@ -702,7 +707,7 @@
                 
                 <div class="action-buttons">
                     <button class="btn btn-yellow" onclick="resetMemory()">RESET</button>
-                    <button class="btn btn-purple" onclick="checkSolution()">CHECK STATUS</button>
+                    <button class="btn btn-purple" id="checkStatusBtn" onclick="checkSolution()">CHECK STATUS</button>
                     <button class="btn btn-gray" onclick="backToMenu()">MAIN MENU</button>
                 </div>
             </div>
@@ -735,7 +740,8 @@
             startTime: null,
             timerInterval: null,
             selectedTower: null,
-            currentInput: ''
+            currentInput: '',
+            checksRemaining: 0
         };
 
         function initDiscButtons() {
@@ -904,41 +910,83 @@
         function editMove(index, field, value) {
             const num = parseInt(value);
             if (!isNaN(num)) {
+                const oldMove = {...state.moves[index]};
+                
                 if (field === 'disc' && num >= 1 && num <= state.numDiscs) {
                     state.moves[index].disc = num;
                 } else if (field === 'to' && num >= 1 && num <= 3) {
                     state.moves[index].to = num - 1;
+                } else {
+                    return; // Invalid input
                 }
-                updateMemoryUI();
                 
-                // Auto-check after editing
-                setTimeout(() => {
-                    const minMoves = Math.pow(2, state.numDiscs) - 1;
-                    if (state.moves.length >= minMoves) {
-                        const testTowers = simulateMoves();
-                        let isComplete = testTowers[2].length === state.numDiscs;
-                        
-                        if (isComplete) {
-                            let isCorrect = true;
-                            for (let i = 0; i < testTowers[2].length; i++) {
-                                if (testTowers[2][i] !== state.numDiscs - i) {
-                                    isCorrect = false;
-                                    break;
-                                }
-                            }
-                            
-                            if (isCorrect) {
-                                // They won! Stop timer and show congratulations
-                                if (state.timerInterval) {
-                                    clearInterval(state.timerInterval);
-                                    state.timerInterval = null;
-                                }
-                                state.towers = testTowers;
-                                showResult();
-                            }
+                // Validate the edited move sequence
+                const testTowers = [
+                    Array.from({ length: state.numDiscs }, (_, i) => state.numDiscs - i),
+                    [],
+                    []
+                ];
+                
+                let isValid = true;
+                for (let i = 0; i <= index; i++) {
+                    const move = state.moves[i];
+                    const disc = move.disc;
+                    
+                    // Check if disc is on top of a tower
+                    let fromTower = -1;
+                    for (let t = 0; t < 3; t++) {
+                        if (testTowers[t].length > 0 && testTowers[t][testTowers[t].length - 1] === disc) {
+                            fromTower = t;
+                            break;
                         }
                     }
-                }, 100);
+                    
+                    if (fromTower === -1) {
+                        isValid = false;
+                        break;
+                    }
+                    
+                    testTowers[fromTower].pop();
+                    testTowers[move.to].push(disc);
+                }
+                
+                if (!isValid) {
+                    // Revert the change
+                    state.moves[index] = oldMove;
+                    alert(`❌ Invalid Move! Disc ${state.moves[index].disc} is not on top when this move is made.`);
+                }
+                
+                updateMemoryUI();
+                
+                // Auto-check after editing if valid
+                if (isValid) {
+                    setTimeout(() => {
+                        const minMoves = Math.pow(2, state.numDiscs) - 1;
+                        if (state.moves.length >= minMoves) {
+                            const finalTowers = simulateMoves();
+                            let isComplete = finalTowers[2].length === state.numDiscs;
+                            
+                            if (isComplete) {
+                                let isCorrect = true;
+                                for (let i = 0; i < finalTowers[2].length; i++) {
+                                    if (finalTowers[2][i] !== state.numDiscs - i) {
+                                        isCorrect = false;
+                                        break;
+                                    }
+                                }
+                                
+                                if (isCorrect) {
+                                    if (state.timerInterval) {
+                                        clearInterval(state.timerInterval);
+                                        state.timerInterval = null;
+                                    }
+                                    state.towers = finalTowers;
+                                    showResult();
+                                }
+                            }
+                        }
+                    }, 100);
+                }
             }
         }
 
@@ -950,38 +998,55 @@
                 const stick = parseInt(state.currentInput[1]);
                 
                 if (disc >= 1 && disc <= state.numDiscs && stick >= 1 && stick <= 3) {
-                    state.moves.push({ disc: disc, to: stick - 1 });
-                    state.currentInput = '';
-                    updateMemoryUI();
+                    // Validate the move - check if disc is on top of a tower
+                    const currentTowers = simulateMoves();
+                    let discIsOnTop = false;
                     
-                    // Auto-check if solution is complete
-                    setTimeout(() => {
-                        const minMoves = Math.pow(2, state.numDiscs) - 1;
-                        if (state.moves.length >= minMoves) {
-                            const testTowers = simulateMoves();
-                            let isComplete = testTowers[2].length === state.numDiscs;
-                            
-                            if (isComplete) {
-                                let isCorrect = true;
-                                for (let i = 0; i < testTowers[2].length; i++) {
-                                    if (testTowers[2][i] !== state.numDiscs - i) {
-                                        isCorrect = false;
-                                        break;
-                                    }
-                                }
+                    for (let i = 0; i < 3; i++) {
+                        if (currentTowers[i].length > 0 && currentTowers[i][currentTowers[i].length - 1] === disc) {
+                            discIsOnTop = true;
+                            break;
+                        }
+                    }
+                    
+                    if (discIsOnTop) {
+                        state.moves.push({ disc: disc, to: stick - 1 });
+                        state.currentInput = '';
+                        updateMemoryUI();
+                        
+                        // Auto-check if solution is complete
+                        setTimeout(() => {
+                            const minMoves = Math.pow(2, state.numDiscs) - 1;
+                            if (state.moves.length >= minMoves) {
+                                const testTowers = simulateMoves();
+                                let isComplete = testTowers[2].length === state.numDiscs;
                                 
-                                if (isCorrect) {
-                                    // They won! Stop timer and show congratulations
-                                    if (state.timerInterval) {
-                                        clearInterval(state.timerInterval);
-                                        state.timerInterval = null;
+                                if (isComplete) {
+                                    let isCorrect = true;
+                                    for (let i = 0; i < testTowers[2].length; i++) {
+                                        if (testTowers[2][i] !== state.numDiscs - i) {
+                                            isCorrect = false;
+                                            break;
+                                        }
                                     }
-                                    state.towers = testTowers;
-                                    showResult();
+                                    
+                                    if (isCorrect) {
+                                        if (state.timerInterval) {
+                                            clearInterval(state.timerInterval);
+                                            state.timerInterval = null;
+                                        }
+                                        state.towers = testTowers;
+                                        showResult();
+                                    }
                                 }
                             }
-                        }
-                    }, 100);
+                        }, 100);
+                    } else {
+                        // Invalid move - disc is not on top!
+                        state.currentInput = '';
+                        updateMoveTable();
+                        alert(`❌ Invalid Move! Disc ${disc} is not on top of any tower. You can only move the top disc.`);
+                    }
                 } else {
                     state.currentInput = '';
                     updateMoveTable();
@@ -1026,6 +1091,13 @@
         }
 
         function checkSolution() {
+            if (state.checksRemaining <= 0) {
+                return; // No checks left
+            }
+            
+            state.checksRemaining--;
+            updateCheckButton();
+            
             state.towers = simulateMoves();
             const isWin = checkWin();
             
@@ -1041,6 +1113,18 @@
                 showResult();
             }
         }
+        
+        function updateCheckButton() {
+            const btn = document.getElementById('checkStatusBtn');
+            if (btn) {
+                btn.textContent = `CHECK STATUS (${state.checksRemaining})`;
+                if (state.checksRemaining <= 0) {
+                    btn.disabled = true;
+                } else {
+                    btn.disabled = false;
+                }
+            }
+        }
 
         function formatTime(seconds) {
             const mins = Math.floor(seconds / 60);
@@ -1054,6 +1138,7 @@
             state.startTime = Date.now();
             state.selectedTower = null;
             state.currentInput = '';
+            state.checksRemaining = state.numDiscs; // Set checks to number of discs
             
             if (state.timerInterval) clearInterval(state.timerInterval);
             
@@ -1106,6 +1191,7 @@
                 
                 state.timerInterval = setInterval(() => updateMemoryUI(), 1000);
                 updateMemoryUI();
+                updateCheckButton(); // Initialize the check button
             }
         }
 
@@ -1121,7 +1207,9 @@
             state.moves = [];
             state.currentInput = '';
             state.startTime = Date.now();
+            state.checksRemaining = state.numDiscs; // Reset checks
             updateMemoryUI();
+            updateCheckButton(); // Update button display
         }
 
         function backToMenu() {
@@ -1182,6 +1270,7 @@
                     // Restart timer
                     state.timerInterval = setInterval(() => updateMemoryUI(), 1000);
                     updateMemoryUI();
+                    updateCheckButton(); // Update the check button
                 };
                 buttons.appendChild(continueBtn);
             }
